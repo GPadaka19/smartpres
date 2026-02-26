@@ -5,6 +5,7 @@ import { useSession } from "@/app/hooks/useSession";
 import { Alert } from "@/app/components/Alert";
 
 const SCANNER_ID = "qr-scanner-root";
+const FALLBACK_COUNTDOWN = 15;
 
 type StopScannerCallback = () => void;
 
@@ -47,27 +48,68 @@ function extractTokenFromDecoded(decoded: string): string {
 
 export default function AbsenPage() {
   const { getHeaders, clearSession } = useSession();
-  const [mode, setMode] = useState<"scan" | "manual">("scan");
+  const [mode, setMode] = useState<"scan" | "manual">("manual");
   const [manualToken, setManualToken] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [pasteError, setPasteError] = useState<string | null>(null);
   const scannerRef = useRef<{ stop: () => Promise<void> } | null>(null);
   const [scanning, setScanning] = useState(false);
 
-  const handlePasteToken = useCallback(async () => {
-    setPasteError(null);
+  // Background token state
+  const [liveToken, setLiveToken] = useState<string | null>(null);
+  const [tokenLoading, setTokenLoading] = useState(true);
+  const [tokenCountdown, setTokenCountdown] = useState(FALLBACK_COUNTDOWN);
+
+  // Fetch latest token from /api/token
+  const fetchToken = useCallback(async () => {
+    setTokenLoading(true);
     try {
-      const text = await navigator.clipboard.readText();
-      const extracted = extractTokenFromDecoded(text);
-      if (extracted) setManualToken(extracted);
-      else setPasteError("Clipboard kosong atau bukan teks.");
+      const res = await fetch("/api/token");
+      const json = await res.json();
+      if (res.ok && json.token) {
+        setLiveToken(json.token);
+        if (json.expired_at) {
+          const diff = Math.max(
+            1,
+            Math.round((new Date(json.expired_at).getTime() - Date.now()) / 1000)
+          );
+          setTokenCountdown(diff > 0 && diff < 120 ? diff : FALLBACK_COUNTDOWN);
+        } else {
+          setTokenCountdown(FALLBACK_COUNTDOWN);
+        }
+      }
     } catch {
-      setPasteError(
-        "Tidak dapat membaca clipboard. Izinkan akses atau tempel manual (Ctrl+V)."
-      );
+      // silently fail, keep previous token
+    } finally {
+      setTokenLoading(false);
     }
   }, []);
+
+  // Auto-refresh token in background
+  useEffect(() => {
+    fetchToken();
+  }, [fetchToken]);
+
+  useEffect(() => {
+    if (tokenLoading) return;
+    const interval = setInterval(() => {
+      setTokenCountdown((prev) => {
+        if (prev <= 1) {
+          fetchToken();
+          return FALLBACK_COUNTDOWN;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [tokenLoading, fetchToken]);
+
+  // "Ambil Token" handler — fill input with live token
+  const handleFetchAndFill = useCallback(() => {
+    if (liveToken) {
+      setManualToken(liveToken);
+    }
+  }, [liveToken]);
 
   const submitToken = useCallback(
     async (token: string) => {
@@ -180,17 +222,6 @@ export default function AbsenPage() {
       <div className="mb-6 flex gap-2">
         <button
           type="button"
-          onClick={() => setMode("scan")}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            mode === "scan"
-              ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900"
-              : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-          }`}
-        >
-          Scan QR
-        </button>
-        <button
-          type="button"
           onClick={() => {
             safeStopScanner(scannerRef);
             setScanning(false);
@@ -203,6 +234,17 @@ export default function AbsenPage() {
           }`}
         >
           Manual
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("scan")}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            mode === "scan"
+              ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900"
+              : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+          }`}
+        >
+          Scan QR
         </button>
       </div>
 
@@ -235,13 +277,8 @@ export default function AbsenPage() {
             Masukkan token
           </h2>
           <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
-            Tempel token dari QR presensi ke kolom di bawah, lalu kirim.
+            Klik &quot;Ambil Token&quot; untuk mengisi token QR terbaru secara otomatis, lalu kirim.
           </p>
-          {pasteError && (
-            <p className="mb-3 text-sm text-amber-600 dark:text-amber-400">
-              {pasteError}
-            </p>
-          )}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="min-w-0 flex-1">
               <label
@@ -249,26 +286,28 @@ export default function AbsenPage() {
                 className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
               >
                 Token
+                {liveToken && (
+                  <span className="ml-2 font-normal text-xs text-zinc-400 dark:text-zinc-500">
+                    refresh in {tokenCountdown}s
+                  </span>
+                )}
               </label>
               <div className="flex gap-2">
                 <input
                   id="manual-token"
                   type="text"
                   value={manualToken}
-                  onChange={(e) => {
-                    setManualToken(e.target.value);
-                    setPasteError(null);
-                  }}
-                  onPaste={() => setPasteError(null)}
-                  placeholder="Tempel token di sini (Ctrl+V atau tombol Tempel)"
+                  onChange={(e) => setManualToken(e.target.value)}
+                  placeholder="Token akan terisi otomatis…"
                   className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder-zinc-500"
                 />
                 <button
                   type="button"
-                  onClick={handlePasteToken}
-                  className="shrink-0 rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  onClick={handleFetchAndFill}
+                  disabled={!liveToken || tokenLoading}
+                  className="shrink-0 rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
                 >
-                  Tempel
+                  {tokenLoading ? "Memuat…" : "Ambil Token"}
                 </button>
               </div>
             </div>
