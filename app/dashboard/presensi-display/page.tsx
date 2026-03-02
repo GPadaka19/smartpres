@@ -148,7 +148,7 @@ export default function PresensiDisplayPage() {
     >
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+          <h1 className="text-xl font-semibold text-zinc-900 sm:text-2xl dark:text-zinc-50">
             Presensi Display
           </h1>
           <p className="mt-1 text-zinc-600 dark:text-zinc-400">
@@ -166,27 +166,27 @@ export default function PresensiDisplayPage() {
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
-              Keluar fullscreen
+              <span className="hidden sm:inline">Keluar fullscreen</span>
             </>
           ) : (
             <>
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
               </svg>
-              Fullscreen
+              <span className="hidden sm:inline">Fullscreen</span>
             </>
           )}
         </button>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid min-w-0 gap-6 lg:grid-cols-3">
         {/* Left — QR (height fits content) */}
-        <section className="flex flex-col items-center gap-4 self-start rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+        <section className="flex min-w-0 flex-col items-center gap-4 self-start rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
           <h2 className="self-start text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
             QR Presensi
           </h2>
           {(() => {
-            const qrSize = isFullscreen ? 320 : 200;
+            const qrSize = isFullscreen ? 320 : 180;
             return (
               <>
                 {tokenLoading && !token && (
@@ -260,7 +260,7 @@ export default function PresensiDisplayPage() {
         </section>
 
         {/* Right — Table (2/3) */}
-        <section className="rounded-xl border border-zinc-200 bg-white lg:col-span-2 dark:border-zinc-800 dark:bg-zinc-900">
+        <section className="min-w-0 overflow-hidden rounded-xl border border-zinc-200 bg-white lg:col-span-2 dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
             <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Daftar Presensi
@@ -285,25 +285,25 @@ export default function PresensiDisplayPage() {
             </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[480px] text-left text-sm">
+            <table className="w-full min-w-[420px] text-left text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
-                  <th className="px-4 py-3 font-medium text-zinc-700 dark:text-zinc-300">
+                  <th className="px-3 py-3 font-medium text-zinc-700 sm:px-4 dark:text-zinc-300">
                     No
                   </th>
-                  <th className="px-4 py-3 font-medium text-zinc-700 dark:text-zinc-300">
+                  <th className="px-3 py-3 font-medium text-zinc-700 sm:px-4 dark:text-zinc-300">
                     Nama
                   </th>
-                  <th className="px-4 py-3 font-medium text-zinc-700 dark:text-zinc-300">
+                  <th className="px-3 py-3 font-medium text-zinc-700 sm:px-4 dark:text-zinc-300">
                     Shift
                   </th>
-                  <th className="px-4 py-3 font-medium text-zinc-700 dark:text-zinc-300">
-                    Jam Masuk
+                  <th className="px-3 py-3 font-medium text-zinc-700 sm:px-4 dark:text-zinc-300">
+                    Masuk
                   </th>
-                  <th className="px-4 py-3 font-medium text-zinc-700 dark:text-zinc-300">
-                    Jam Keluar
+                  <th className="px-3 py-3 font-medium text-zinc-700 sm:px-4 dark:text-zinc-300">
+                    Keluar
                   </th>
-                  <th className="px-4 py-3 font-medium text-zinc-700 dark:text-zinc-300">
+                  <th className="px-3 py-3 font-medium text-zinc-700 sm:px-4 dark:text-zinc-300">
                     Status
                   </th>
                 </tr>
@@ -313,7 +313,7 @@ export default function PresensiDisplayPage() {
                   <tr>
                     <td
                       colSpan={6}
-                      className="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400"
+                      className="px-3 py-8 text-center text-zinc-500 sm:px-4 dark:text-zinc-400"
                     >
                       {sseStatus === "connecting"
                         ? "Memuat data presensi…"
@@ -329,22 +329,22 @@ export default function PresensiDisplayPage() {
                         key={i}
                         className="border-b border-zinc-100 last:border-0 dark:border-zinc-800"
                       >
-                        <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                        <td className="px-3 py-3 text-zinc-600 sm:px-4 dark:text-zinc-400">
                           {i + 1}
                         </td>
-                        <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50">
+                        <td className="px-3 py-3 font-medium text-zinc-900 sm:px-4 dark:text-zinc-50">
                           {field.name(row)}
                         </td>
-                        <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                        <td className="px-3 py-3 text-zinc-700 sm:px-4 dark:text-zinc-300">
                           {field.shift(row)}
                         </td>
-                        <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                        <td className="px-3 py-3 text-zinc-700 sm:px-4 dark:text-zinc-300">
                           {field.jamMasuk(row)}
                         </td>
-                        <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                        <td className="px-3 py-3 text-zinc-700 sm:px-4 dark:text-zinc-300">
                           {field.jamKeluar(row)}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-3 sm:px-4">
                           <span
                             className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
                               isLate
