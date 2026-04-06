@@ -41,6 +41,7 @@ async function handleAbsen(request: Request): Promise<Response> {
     message: success
       ? "Presensi berhasil dicatat."
       : "Presensi mungkin gagal. Periksa riwayat.",
+    debugHtml: result.html.substring(0, 500)
   });
 }
 
