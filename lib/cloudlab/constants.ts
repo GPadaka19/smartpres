@@ -4,7 +4,7 @@ export const CLOUDLAB_URLS = {
   login: `${CLOUDLAB_BASE_URL}/login.php`,
   dashboard: `${CLOUDLAB_BASE_URL}/dashboard.php`,
   history: `${CLOUDLAB_BASE_URL}/riwayat.php`,
-  absen: `${CLOUDLAB_BASE_URL}/scan_absen.php`,
+  absen: `${CLOUDLAB_BASE_URL}/process_presensi.php`,
   changePassword: `${CLOUDLAB_BASE_URL}/change_password.php`,
   qrToken: `${CLOUDLAB_BASE_URL}/generate_qr.php?real_time=1`,
   realtimePresensi: `${CLOUDLAB_BASE_URL}/realtime_presensi.php`,
