@@ -146,12 +146,12 @@ export default function PresensiDisplayPage() {
       ref={fullscreenRef}
       className={`min-h-0 ${isFullscreen ? "min-h-screen bg-zinc-100 p-6 dark:bg-zinc-950" : ""}`}
     >
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900 sm:text-2xl dark:text-zinc-50">
+          <h1 className="mb-1 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
             Presensi Display
           </h1>
-          <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
             QR presensi real-time dan daftar kehadiran.
           </p>
         </div>
