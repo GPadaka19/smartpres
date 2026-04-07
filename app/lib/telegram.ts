@@ -16,11 +16,10 @@ interface TelegramResponse {
 
 /**
  * Send a plain-text message via the Telegram Bot API.
- * Supports multiple chat IDs separated by commas in TELEGRAM_CHAT_ID.
  */
 export async function sendTelegramMessage(message: string): Promise<{ success: boolean; error?: string }> {
     const token = process.env.TELEGRAM_BOT_TOKEN;
-    const chatIdRaw = process.env.TELEGRAM_CHAT_ID;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
 
     if (!token || token === "YOUR_BOT_TOKEN_HERE") {
         const err = "TELEGRAM_BOT_TOKEN is not configured in .env";
@@ -28,61 +27,37 @@ export async function sendTelegramMessage(message: string): Promise<{ success: b
         return { success: false, error: err };
     }
 
-    if (!chatIdRaw) {
+    if (!chatId) {
         const err = "TELEGRAM_CHAT_ID is not configured in .env";
-        console.warn(`[telegram] ${err}`);
-        return { success: false, error: err };
-    }
-
-    const chatIds = chatIdRaw.split(",").map(id => id.trim()).filter(id => id.length > 0);
-
-    if (chatIds.length === 0) {
-        const err = "No valid Chat IDs found in TELEGRAM_CHAT_ID";
         console.warn(`[telegram] ${err}`);
         return { success: false, error: err };
     }
 
     try {
         const url = `${TELEGRAM_API_BASE}/bot${token}/sendMessage`;
-        let hasError = false;
-        const errors: string[] = [];
 
-        await Promise.all(chatIds.map(async (chatId) => {
-            try {
-                const res = await fetch(url, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        chat_id: chatId,
-                        text: message,
-                        parse_mode: "HTML",
-                    }),
-                });
+        const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                chat_id: chatId,
+                text: message,
+                parse_mode: "HTML",
+            }),
+        });
 
-                const data: TelegramResponse = await res.json();
+        const data: TelegramResponse = await res.json();
 
-                if (!data.ok) {
-                    console.error(`[telegram] API error for chat ${chatId}:`, data.description);
-                    hasError = true;
-                    errors.push(`[${chatId}] ${data.description}`);
-                }
-            } catch (err) {
-                const errMsg = err instanceof Error ? err.message : "Failed to send";
-                console.error(`[telegram] Network error for chat ${chatId}:`, errMsg);
-                hasError = true;
-                errors.push(`[${chatId}] ${errMsg}`);
-            }
-        }));
-
-        if (hasError) {
-            return { success: false, error: errors.join(", ") };
+        if (!data.ok) {
+            console.error("[telegram] API error:", data.description);
+            return { success: false, error: data.description ?? "Unknown Telegram API error" };
         }
 
-        console.log(`[telegram] Message sent successfully to ${chatIds.length} chat(s)`);
+        console.log("[telegram] Message sent successfully");
         return { success: true };
     } catch (err) {
-        const message = err instanceof Error ? err.message : "Unexpected error during Telegram broadcast";
-        console.error("[telegram] Broadcast error:", message);
+        const message = err instanceof Error ? err.message : "Failed to send Telegram message";
+        console.error("[telegram] Network error:", message);
         return { success: false, error: message };
     }
 }
