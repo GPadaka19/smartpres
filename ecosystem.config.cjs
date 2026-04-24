@@ -11,7 +11,7 @@
 module.exports = {
   apps: [
     {
-      name: "smartpres",
+      name: "fork/backup/ss7",
       script: "node_modules/next/dist/bin/next",
       args: "start",
       cwd: __dirname,
